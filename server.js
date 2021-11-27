@@ -9,11 +9,7 @@ const db = require("./models");
 //Middlewares
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-var corsOptions = {
-  origin: "https://twitter-front-react.vercel.app/",
-  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-};
-app.use(cors(corsOptions));
+app.use(cors());
 
 db();
 // Routes
