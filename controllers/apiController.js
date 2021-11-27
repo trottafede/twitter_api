@@ -16,7 +16,9 @@ module.exports = {
       const token = jwt.sign({ user }, process.env.JWT_SECRET_TEXT);
       return res.status(200).json({ message: "Entraste correctamente", token });
     } catch (error) {
-      return res.status(400).json({ message: "Explotó algo" });
+      let message = error.toString().split("\n")[0];
+
+      return res.status(400).json({ message });
     }
   },
   storeSignup: async (req, res) => {
@@ -37,69 +39,102 @@ module.exports = {
       }
       const newUser = await user.save();
     } catch (error) {
-      return res.status(400).json({ message: "Explotó algo" });
+      let message = error.toString().split("\n")[0];
+      return res.status(400).json({ message });
     }
     const token = jwt.sign({ newUser }, process.env.JWT_SECRET_TEXT);
     return res
       .status(200)
       .json({ message: "Create usuario correctamente", token });
   },
-
   index: async (req, res) => {
-    const loggedUser = req.user;
+    const { user } = req.user;
     let tweets = [];
     let users = [];
     try {
       tweets = await Tweet.find().populate("User").sort({ createdAt: -1 });
       users = await User.find({
-        _id: { $nin: loggedUser.user },
+        _id: { $nin: user },
       }).sort({ createdAt: -1 });
     } catch (error) {
-      return res.status(400).json({ message: "Explotó algo", error });
+      let message = error.toString().split("\n")[0];
+
+      return res.status(400).json({ message: "Explotó algo", message });
     }
     return res.status(200).json({ tweets, users });
   },
 
-  update: async (req, res) => {
+  updateLike: async (req, res) => {
     const { tweetId } = req.params;
+    const { user } = req.user;
     try {
       let tweet = await Tweet.findById(tweetId);
-      if (!tweet.Likes.includes(req.user._id)) {
-        await tweet.Likes.push(req.user);
+
+      if (!tweet.Likes.includes(user._id)) {
+        await tweet.Likes.push(user);
         await tweet.save();
+        return res.status(200).json({ message: "added like" });
       }
     } catch (error) {
-      if (error) throw error;
+      let message = error.toString().split("\n")[0];
+
+      return res
+        .status(400)
+        .json({ message: "Explotó algo al intentar likear", message });
     }
-    res.redirect("/");
+    return res
+      .status(400)
+      .json({ message: "No se pudo completar agregar like" });
   },
-  destroy: async (req, res) => {
+  destroyLike: async (req, res) => {
     const { tweetId } = req.params;
+    const { user } = req.user;
 
     try {
       let tweet = await Tweet.findById(tweetId);
-      let pos = await tweet.Likes.indexOf(req.user._id);
-      await tweet.Likes.splice(pos, 1); // this is how to remove an item
-      await tweet.save();
+      if (tweet.Likes.includes(user._id)) {
+        let pos = await tweet.Likes.indexOf(user._id);
+        await tweet.Likes.splice(pos, 1); // this is how to remove an item
+        await tweet.save();
+        return res.status(200).json({ message: "deleted like" });
+      }
     } catch (error) {
-      if (error) throw error;
+      let message = error.toString().split("\n")[0];
+      return res
+        .status(400)
+        .json({ message: "Explotó algo al intentar destruir like", message });
     }
-
-    res.redirect("/");
+    return res
+      .status(400)
+      .json({ message: "No se pudo completar destruir like" });
   },
 
-  store: async (req, res) => {
-    const Text = req.body.tweet;
-    const User = req.user;
+  storeTweet: async (req, res) => {
+    const { tweetContent } = req.body;
+    const { user } = req.user;
 
+    console.log(tweetContent);
+    console.log(user);
     try {
-      const tweetCreated = await Tweet.create({ Text, User });
-      await User.tweetsList.push(tweetCreated);
-      await User.save();
+      const tweetCreated = await Tweet.create({
+        Text: tweetContent,
+        User: user,
+      });
+      userInDB = await User.findById(user._id);
+      if (userInDB) {
+        await userInDB.tweetsList.push(tweetCreated);
+        await userInDB.save();
+        return res.status(200).json({ message: "Se agregó un tweet" });
+      }
     } catch (error) {
-      if (error) throw error;
+      let message = error.toString().split("\n")[0];
+      return res
+        .status(400)
+        .json({ message: "Explotó algo al intentar postear tweet", message });
     }
-    res.redirect("/");
+    return res
+      .status(400)
+      .json({ message: "No se pudo completar agregar tweet" });
   },
 
   show: async (req, res) => {
@@ -110,38 +145,52 @@ module.exports = {
         path: "tweetsList",
         options: { limit: 20, sort: [{ createdAt: "DESC" }] },
       });
+      if (userFound) {
+        return res.status(200).json(userFound);
+      }
     } catch (error) {
-      if (error) throw error;
+      let message = error.toString().split("\n")[0];
+      return res.status(400).json({ message: "Explotó algo", message });
     }
 
-    res.render("profile", { passportUser: req.user, user: userFound });
+    return res
+      .status(400)
+      .json({ message: "No se pudo completar mostrar user" });
   },
-  update: async (req, res) => {
-    const passportUser = req.user;
+  updateUser: async (req, res) => {
+    const { user } = req.user;
+
     const { firstname, lastname, age, description, image } = req.body;
-    let updatedPassportUser;
     try {
       const options = { new: true };
-      updatedPassportUser = await User.findOneAndUpdate(
-        passportUser,
+      const patchedUser = await User.findOneAndUpdate(
+        user,
         { firstname, lastname, age, description, image },
         options
       ).populate({
         path: "tweetsList",
         options: { limit: 20, sort: [{ createdAt: "DESC" }] },
       });
+
+      if (patchedUser) {
+        return res.status(200).json(patchedUser);
+      }
     } catch (error) {
-      if (error) throw error;
+      let message = error.toString().split("\n")[0];
+      return res.status(400).json({ message: "Explotó algo", message });
     }
-    res.render("profile", {
-      passportUser: updatedPassportUser,
-      user: updatedPassportUser,
-    });
+
+    return res
+      .status(400)
+      .json({ message: "No se pudo completar update user" });
   },
   destroyFriendship: async (req, res) => {
     const { username } = req.params;
-    const loggedUser = req.user;
+    const { user } = req.user;
+
     try {
+      loggedUser = await User.findById(user._id);
+
       const userIWillFollow = await User.findOne({ username });
       if (loggedUser.following.includes(userIWillFollow._id)) {
         let pos = await loggedUser.following.indexOf(userIWillFollow._id);
@@ -153,14 +202,18 @@ module.exports = {
         await userIWillFollow.save();
       }
     } catch (error) {
-      if (error) throw error;
+      let message = error.toString().split("\n")[0];
+      return res.status(400).json({ message: "Explotó algo", message });
     }
-    res.redirect("back");
+    return res.status(200).json({ message: "Friendship destroyed" });
   },
   storeFollow: async (req, res) => {
     const { username } = req.params;
-    const loggedUser = req.user;
+    const { user } = req.user;
+
     try {
+      loggedUser = await User.findById(user._id);
+
       const userIWillFollow = await User.findOne({ username });
       if (!loggedUser.following.includes(userIWillFollow._id)) {
         await loggedUser.following.push(userIWillFollow);
@@ -170,8 +223,9 @@ module.exports = {
         await userIWillFollow.save();
       }
     } catch (error) {
-      if (error) throw error;
+      let message = error.toString().split("\n")[0];
+      return res.status(400).json({ message: "Explotó algo", message });
     }
-    res.redirect("back");
+    return res.status(200).json({ message: "Follow exitoso" });
   },
 };

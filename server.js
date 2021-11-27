@@ -13,6 +13,6 @@ app.use(cors());
 
 db();
 // Routes
-app.use(apiRoutes);
+app.use("/api", apiRoutes);
 
 app.listen(port, () => console.log(`listening on http://localhost:${port}`));
