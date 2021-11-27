@@ -10,7 +10,7 @@ const db = require("./models");
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 var corsOptions = {
-  origin: "http://example.com",
+  origin: "https://twitter-front-react.vercel.app/",
   optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
 };
 app.use(cors(corsOptions));
