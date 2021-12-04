@@ -14,7 +14,9 @@ module.exports = {
         return res.status(401).json({ message: "Incorrect password." });
       }
       const token = jwt.sign({ user }, process.env.JWT_SECRET_TEXT);
-      return res.status(200).json({ message: "Entraste correctamente", token });
+      return res
+        .status(200)
+        .json({ message: "Entraste correctamente", token, user });
     } catch (error) {
       let message = error.toString().split("\n")[0];
 
