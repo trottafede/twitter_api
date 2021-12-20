@@ -25,7 +25,7 @@ module.exports = {
   },
   storeSignup: async (req, res) => {
     const { firstname, lastname, username, email, password } = req.body;
-
+    console.log ( req.body );
     try {
       const user = new User({
         firstname,
