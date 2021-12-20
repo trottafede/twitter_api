@@ -25,9 +25,8 @@ module.exports = {
   },
   storeSignup: async (req, res) => {
     const { firstname, lastname, username, email, password } = req.body;
-    console.log(req.body);
     try {
-      const user = new User({
+      const newUser = new User({
         firstname,
         lastname,
         username,
@@ -36,17 +35,16 @@ module.exports = {
       });
 
       const isUserInDB = await User.findOne({ email });
-      console.log(isUserInDB);
       if (isUserInDB) {
         return res.status(401).json({ message: "Ya existe ese usuario" });
       }
-      const newUser = await user.save();
-      const token = jwt.sign({ newUser }, process.env.JWT_SECRET_TEXT);
+      const user = await newUser.save();
+      const token = jwt.sign({ user }, process.env.JWT_SECRET_TEXT);
 
       return res.status(200).json({
         message: "Create usuario correctamente",
         token,
-        user: newUser,
+        user,
       });
     } catch (error) {
       let message = error.toString().split("\n")[0];
