@@ -47,7 +47,7 @@ module.exports = {
     const token = jwt.sign({ newUser }, process.env.JWT_SECRET_TEXT);
     return res
       .status(200)
-      .json({ message: "Create usuario correctamente", token });
+      .json({ message: "Create usuario correctamente", token, user:newUser });
   },
   index: async (req, res) => {
     const { user } = req.user;
