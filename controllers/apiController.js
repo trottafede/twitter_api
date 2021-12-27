@@ -168,7 +168,7 @@ module.exports = {
     try {
       const options = { new: true };
       const patchedUser = await User.findOneAndUpdate(
-        user,
+        user._id,
         { firstname, lastname, age, description, image },
         options
       ).populate({
