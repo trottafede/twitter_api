@@ -227,11 +227,15 @@ module.exports = {
 
         await userIWillFollow.followers.push(loggedUser);
         await userIWillFollow.save();
+        return res.status(200).json({ message: "Follow exitoso" });
       }
     } catch (error) {
       let message = error.toString().split("\n")[0];
       return res.status(400).json({ message: "Explotó algo", message });
     }
-    return res.status(200).json({ message: "Follow exitoso" });
+
+    return res
+      .status(400)
+      .json({ message: "No se pudo completar add friendship" });
   },
 };
