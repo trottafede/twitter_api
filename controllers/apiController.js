@@ -162,22 +162,24 @@ module.exports = {
       .json({ message: "No se pudo completar mostrar user" });
   },
   updateUser: async (req, res) => {
-    const { user } = req.user;
-
+    const username = req.params.username;
     const { firstname, lastname, age, description, image } = req.body;
+
     try {
-      const options = { new: true };
-      const patchedUser = await User.findOneAndUpdate(
-        user._id,
-        { firstname, lastname, age, description, image },
-        options
-      ).populate({
+      let userToChange = await User.findOne({ username }).populate({
         path: "tweetsList",
         options: { limit: 20, sort: [{ createdAt: "DESC" }] },
       });
 
-      if (patchedUser) {
-        return res.status(200).json(patchedUser);
+      if (userToChange) {
+        userToChange.firstname = firstname;
+        userToChange.lastname = lastname;
+        userToChange.age = age;
+        userToChange.description = description;
+        userToChange.image = image;
+        await userToChange.save();
+        console.log(userToChange);
+        return res.status(200).json(userToChange);
       }
     } catch (error) {
       let message = error.toString().split("\n")[0];
