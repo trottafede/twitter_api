@@ -206,12 +206,17 @@ module.exports = {
         pos = await userIWillFollow.followers.indexOf(loggedUser._id);
         await userIWillFollow.followers.splice(pos, 1); // this is how to remove an item
         await userIWillFollow.save();
+
+        return res.status(200).json(loggedUser);
       }
     } catch (error) {
       let message = error.toString().split("\n")[0];
       return res.status(400).json({ message: "Explotó algo", message });
     }
-    return res.status(200).json({ message: "Friendship destroyed" });
+
+    return res
+      .status(400)
+      .json({ message: "No se pudo completar destroy friendship" });
   },
   storeFollow: async (req, res) => {
     const { username } = req.params;
@@ -227,7 +232,7 @@ module.exports = {
 
         await userIWillFollow.followers.push(loggedUser);
         await userIWillFollow.save();
-        return res.status(200).json({ message: "Follow exitoso" });
+        return res.status(200).json(loggedUser);
       }
     } catch (error) {
       let message = error.toString().split("\n")[0];
