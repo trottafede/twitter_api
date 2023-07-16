@@ -12,7 +12,7 @@ app.use(express.json());
 app.use(cors());
 
 db();
-// Routes
+// Routesss
 app.use("/api", apiRoutes);
 
 app.listen(port, () => console.log(`listening on http://localhost:${port}`));
